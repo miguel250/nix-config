@@ -1,0 +1,15 @@
+repos:
+  - repo: local
+    hooks:
+     - id: nixfmt
+       name: "     Format Nix files"
+       description: Format Nix code with nixfmt
+       entry: nixfmt
+       language: system
+       types: [nix]
+     - id: nix-flake-check
+       name: "     Nix flake check"
+       entry: nix flake check
+       language: system
+       pass_filenames: false
+       always_run: true
