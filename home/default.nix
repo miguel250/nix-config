@@ -12,6 +12,7 @@ in
 
   imports = [
     ./programs/ghosty.nix
+    ./programs/codex
   ];
 
   programs = {
