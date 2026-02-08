@@ -17,9 +17,31 @@ let
         cargo = rustToolchain;
         rustc = rustToolchain;
       };
-      codexCli = codex.packages.${pkgs.stdenv.hostPlatform.system}.codex-rs.override {
-        inherit rustPlatform;
-      };
+      codexCli =
+        (codex.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+          inherit rustPlatform;
+        }).overrideAttrs
+          (oa: {
+            nativeBuildInputs =
+              (oa.nativeBuildInputs or [ ])
+              ++ (with pkgs; [
+                cmake
+                git
+                llvmPackages.clang
+                pkg-config
+              ]);
+            buildInputs =
+              (oa.buildInputs or [ ])
+              ++ (with pkgs; [
+                openssl
+                llvmPackages.libclang.lib
+              ]);
+            env = (oa.env or { }) // {
+              LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+              CC = "clang";
+              CXX = "clang++";
+            };
+          });
     in
     {
       inherit
