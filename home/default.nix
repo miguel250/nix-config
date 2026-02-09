@@ -1,13 +1,9 @@
 {
   config,
-  lib,
-  pkgs,
-  dotfiles,
   ...
 }:
 let
   shellAliases = import ./shell.nix;
-  dotfilesPath = dotfiles.outPath or dotfiles;
 in
 {
   manual.manpages.enable = false;
@@ -15,6 +11,7 @@ in
   imports = [
     ./programs/ghosty.nix
     ./programs/codex
+    ./programs/git.nix
   ];
 
   programs = {
@@ -22,12 +19,6 @@ in
     direnv = {
       enable = true;
       nix-direnv.enable = true;
-    };
-    git = {
-      enable = true;
-      includes = [
-        { path = "${dotfilesPath}/git/config"; }
-      ];
     };
     starship.enable = true;
     zsh = {

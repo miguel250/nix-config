@@ -129,8 +129,8 @@ Use this format for every log entry:
 
 Trigger consolidation when either condition is true:
 
-- Notebook has 300 lines or more.
-- `session_count >= 3`.
+- Notebook has 400 lines or more.
+- `session_count >= 5`.
 
 During consolidation:
 

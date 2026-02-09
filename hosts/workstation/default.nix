@@ -3,6 +3,10 @@ let
   username = "mperez";
   hostname = "workstation";
   homeDirectory = "/home/${username}";
+  git = {
+    userName = "Miguel Perez";
+    userEmail = "miguel@miguelpz.com";
+  };
 
   common = import ../common.nix;
   inherit (common) packages;
@@ -13,6 +17,7 @@ in
     username
     hostname
     homeDirectory
+    git
     packages
     ;
 

@@ -42,31 +42,33 @@ let
         hostName:
         let
           host = mkHost hostName;
-          _ = lib.assertMsg (
-            host.hostname == hostName
-          ) "hosts/${hostName} must export hostname = \"${hostName}\"";
           configurationName = "${host.username}@${host.hostname}";
         in
         {
           name = configurationName;
-          value = home-manager.lib.homeManagerConfiguration {
-            pkgs = mkPkgs host.system;
-            extraSpecialArgs = {
-              inherit dotfiles vimrc codex;
+          value =
+            assert lib.assertMsg (
+              host.hostname == hostName
+            ) "hosts/${hostName} must export hostname = \"${hostName}\"";
+            home-manager.lib.homeManagerConfiguration {
+              pkgs = mkPkgs host.system;
+              extraSpecialArgs = {
+                inherit dotfiles vimrc codex;
+                gitUserName = host.git.userName;
+                gitUserEmail = host.git.userEmail;
+              };
+              modules = [
+                host.homeModule
+                ../home/dotfiles.nix
+              ];
             };
-            modules = [
-              host.homeModule
-              ../home/dotfiles.nix
-            ];
-          };
         }
       ) hostnames;
       configurationNames = builtins.map (c: c.name) configurations;
-      _ =
-        lib.assertMsg
-          (builtins.length configurationNames == builtins.length (lib.unique configurationNames))
-          "mkHomeConfigurations: duplicate configuration names (${lib.concatStringsSep ", " configurationNames})";
     in
+    assert lib.assertMsg
+      (builtins.length configurationNames == builtins.length (lib.unique configurationNames))
+      "mkHomeConfigurations: duplicate configuration names (${lib.concatStringsSep ", " configurationNames})";
     builtins.listToAttrs configurations;
 
   mkPackages =
@@ -84,10 +86,10 @@ let
         }) hosts
       );
       hostSystems = builtins.map (host: host.system) hosts;
-      _ = lib.assertMsg (
-        builtins.length hostSystems == builtins.length (lib.unique hostSystems)
-      ) "mkPackages: expected unique host.system values, got (${lib.concatStringsSep ", " hostSystems})";
     in
+    assert lib.assertMsg (
+      builtins.length hostSystems == builtins.length (lib.unique hostSystems)
+    ) "mkPackages: expected unique host.system values, got (${lib.concatStringsSep ", " hostSystems})";
     forEachSystem (
       system:
       let
@@ -137,39 +139,42 @@ let
         hostName:
         let
           host = mkHost hostName;
-          _ = lib.assertMsg (
-            host.hostname == hostName
-          ) "hosts/${hostName} must export hostname = \"${hostName}\"";
         in
         {
           name = host.hostname;
-          value = nix-darwin.lib.darwinSystem {
-            inherit (host) system;
-            specialArgs = {
-              inherit inputs;
-              inherit (host) hostname username homeDirectory;
-            };
-            modules = [
-              ../hosts/darwin.nix
-            ]
-            ++ lib.optional (host ? darwinModule) host.darwinModule
-            ++ [
-              home-manager.darwinModules.home-manager
-              {
-                home-manager = {
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  extraSpecialArgs = {
-                    inherit dotfiles vimrc codex;
+          value =
+            assert lib.assertMsg (
+              host.hostname == hostName
+            ) "hosts/${hostName} must export hostname = \"${hostName}\"";
+            nix-darwin.lib.darwinSystem {
+              inherit (host) system;
+              specialArgs = {
+                inherit inputs;
+                inherit (host) hostname username homeDirectory;
+              };
+              modules = [
+                ../hosts/darwin.nix
+              ]
+              ++ lib.optional (host ? darwinModule) host.darwinModule
+              ++ [
+                home-manager.darwinModules.home-manager
+                {
+                  home-manager = {
+                    useGlobalPkgs = true;
+                    useUserPackages = true;
+                    extraSpecialArgs = {
+                      inherit dotfiles vimrc codex;
+                      gitUserName = host.git.userName;
+                      gitUserEmail = host.git.userEmail;
+                    };
+                    users.${host.username}.imports = [
+                      host.homeModule
+                      ../home/dotfiles.nix
+                    ];
                   };
-                  users.${host.username}.imports = [
-                    host.homeModule
-                    ../home/dotfiles.nix
-                  ];
-                };
-              }
-            ];
-          };
+                }
+              ];
+            };
         }
       ) hosts;
     in

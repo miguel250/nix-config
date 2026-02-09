@@ -26,47 +26,49 @@ let
     (codex.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
       inherit rustPlatform;
     }).overrideAttrs
-      (oa:
-      let
-        installShellCompletions = oa.installShellCompletions or true;
-      in
-      {
-        nativeBuildInputs =
-          (oa.nativeBuildInputs or [ ])
-          ++ (with pkgs; [
-            cmake
-            gitMinimal
-            installShellFiles
-            llvmPackages.clang
-            pkg-config
-          ]);
-        buildInputs =
-          (oa.buildInputs or [ ])
-          ++ (with pkgs; [
-            openssl
-            pkgs.llvmPackages.libclang.lib
-          ]);
-        env = (oa.env or { }) // {
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-          RUST_MIN_STACK=16777216;
-          CC = "clang";
-          CXX = "clang++";
-          NIX_CFLAGS_COMPILE = toString (
-            pkgs.lib.optionals pkgs.stdenv.cc.isGNU [
-              "-Wno-error=stringop-overflow"
-            ]
-            ++ pkgs.lib.optionals pkgs.stdenv.cc.isClang [
-              "-Wno-error=character-conversion"
-            ]
-          );
-        };
-        postInstall =
-          (oa.postInstall or "")
-          + lib.optionalString installShellCompletions ''
-            installShellCompletion --cmd codex --zsh <($out/bin/codex completion zsh)
-          '';
-      });
+      (
+        oa:
+        let
+          installShellCompletions = oa.installShellCompletions or true;
+        in
+        {
+          nativeBuildInputs =
+            (oa.nativeBuildInputs or [ ])
+            ++ (with pkgs; [
+              cmake
+              gitMinimal
+              installShellFiles
+              llvmPackages.clang
+              pkg-config
+            ]);
+          buildInputs =
+            (oa.buildInputs or [ ])
+            ++ (with pkgs; [
+              openssl
+              pkgs.llvmPackages.libclang.lib
+            ]);
+          env = (oa.env or { }) // {
+            PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+            LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+            RUST_MIN_STACK = 16777216;
+            CC = "clang";
+            CXX = "clang++";
+            NIX_CFLAGS_COMPILE = toString (
+              pkgs.lib.optionals pkgs.stdenv.cc.isGNU [
+                "-Wno-error=stringop-overflow"
+              ]
+              ++ pkgs.lib.optionals pkgs.stdenv.cc.isClang [
+                "-Wno-error=character-conversion"
+              ]
+            );
+          };
+          postInstall =
+            (oa.postInstall or "")
+            + lib.optionalString installShellCompletions ''
+              installShellCompletion --cmd codex --zsh <($out/bin/codex completion zsh)
+            '';
+        }
+      );
 
   writableRoots = [
     "${homeDir}/.codex/skills"
