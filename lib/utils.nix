@@ -93,7 +93,7 @@ let
       let
         host = hostsBySystem.${system};
         pkgs = mkPkgs system;
-        hostPackages = host.packages { inherit pkgs codex; };
+        hostPackages = host.packages { inherit pkgs; };
         basePackages = {
           ${host.hostname} = pkgs.buildEnv {
             name = "${host.hostname}-packages";

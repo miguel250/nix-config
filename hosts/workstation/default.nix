@@ -19,7 +19,6 @@ in
   homeModule =
     {
       pkgs,
-      codex,
       ...
     }:
     {
@@ -32,7 +31,7 @@ in
       home = {
         inherit username homeDirectory;
         stateVersion = "26.05";
-        packages = packages { inherit pkgs codex; };
+        packages = packages { inherit pkgs; };
       };
 
       fonts.fontconfig.enable = true;
