@@ -69,6 +69,7 @@ let
       });
 
   writableRoots = [
+    "${homeDir}/.codex/skills"
     "${homeDir}/.cache"
     "${homeDir}/.cache/pip"
     "${homeDir}/.cache/uv"
@@ -108,6 +109,7 @@ in
   home.packages = lib.mkAfter [ codexCli ];
   home.file.".codex/AGENTS.md".source = ./AGENTS.md;
   home.file.".codex/skills/frontend-design".source = ./skills/frontend-design;
+  home.file.".codex/skills/notebook".source = ./skills/notebook;
   home.activation.codexConfigWritable = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p ${codexDir}
     $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm -f ${codexConfigPath}
