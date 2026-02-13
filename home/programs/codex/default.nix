@@ -32,36 +32,24 @@ let
           installShellCompletions = oa.installShellCompletions or true;
         in
         {
+          preBuild = ''
+            # Remove LTO to speed up builds
+            substituteInPlace Cargo.toml \
+              --replace-fail 'lto = "fat"' 'lto = false'
+          '';
           nativeBuildInputs =
             (oa.nativeBuildInputs or [ ])
             ++ (with pkgs; [
-              cmake
-              gitMinimal
               installShellFiles
-              llvmPackages.clang
               pkg-config
             ]);
           buildInputs =
             (oa.buildInputs or [ ])
             ++ (with pkgs; [
               openssl
-              pkgs.llvmPackages.libclang.lib
             ]);
-          env = (oa.env or { }) // {
-            PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-            LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-            RUST_MIN_STACK = 16777216;
-            CC = "clang";
-            CXX = "clang++";
-            NIX_CFLAGS_COMPILE = toString (
-              pkgs.lib.optionals pkgs.stdenv.cc.isGNU [
-                "-Wno-error=stringop-overflow"
-              ]
-              ++ pkgs.lib.optionals pkgs.stdenv.cc.isClang [
-                "-Wno-error=character-conversion"
-              ]
-            );
-          };
+          doCheck = false;
+
           postInstall =
             (oa.postInstall or "")
             + lib.optionalString installShellCompletions ''
