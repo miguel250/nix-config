@@ -1,7 +1,6 @@
 {
   config,
   pkgs,
-  codex,
   lib,
   ...
 }:
@@ -9,54 +8,7 @@ let
   tomlFormat = pkgs.formats.toml { };
   homeDir = config.home.homeDirectory;
 
-  rustBin = pkgs.rust-bin.stable.latest;
-  rustToolchain = rustBin.default.override {
-    extensions = [
-      "rust-src"
-      "clippy"
-      "rustfmt"
-    ];
-  };
-  rustPlatform = pkgs.makeRustPlatform {
-    cargo = rustToolchain;
-    rustc = rustToolchain;
-  };
-
-  codexCli =
-    (codex.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
-      inherit rustPlatform;
-    }).overrideAttrs
-      (
-        oa:
-        let
-          installShellCompletions = oa.installShellCompletions or true;
-        in
-        {
-          preBuild = ''
-            # Remove LTO to speed up builds
-            substituteInPlace Cargo.toml \
-              --replace-fail 'lto = "fat"' 'lto = false'
-          '';
-          nativeBuildInputs =
-            (oa.nativeBuildInputs or [ ])
-            ++ (with pkgs; [
-              installShellFiles
-              pkg-config
-            ]);
-          buildInputs =
-            (oa.buildInputs or [ ])
-            ++ (with pkgs; [
-              openssl
-            ]);
-          doCheck = false;
-
-          postInstall =
-            (oa.postInstall or "")
-            + lib.optionalString installShellCompletions ''
-              installShellCompletion --cmd codex --zsh <($out/bin/codex completion zsh)
-            '';
-        }
-      );
+  codexCli = import ./package.nix { inherit pkgs lib; };
 
   writableRoots = [
     "${homeDir}/.codex/skills"

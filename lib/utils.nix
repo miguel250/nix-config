@@ -6,7 +6,6 @@
   rust-overlay,
   dotfiles,
   vimrc,
-  codex,
 }:
 let
   inherit (nixpkgs) lib;
@@ -53,7 +52,7 @@ let
             home-manager.lib.homeManagerConfiguration {
               pkgs = mkPkgs host.system;
               extraSpecialArgs = {
-                inherit dotfiles vimrc codex;
+                inherit dotfiles vimrc;
                 gitUserName = host.git.userName;
                 gitUserEmail = host.git.userEmail;
               };
@@ -163,7 +162,7 @@ let
                     useGlobalPkgs = true;
                     useUserPackages = true;
                     extraSpecialArgs = {
-                      inherit dotfiles vimrc codex;
+                      inherit dotfiles vimrc;
                       gitUserName = host.git.userName;
                       gitUserEmail = host.git.userEmail;
                     };

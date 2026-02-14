@@ -51,10 +51,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    codex = {
-      url = "git+https://github.com/openai/codex?ref=refs/tags/rust-v0.99.0&submodules=1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   description = "Flake to manage Miguel's hosts";
@@ -73,7 +69,6 @@
       dotfiles,
       vimrc,
       rust-overlay,
-      codex,
       ...
     }:
     let
@@ -95,7 +90,6 @@
           rust-overlay
           dotfiles
           vimrc
-          codex
           ;
       };
       workstation = utils.mkHost "workstation";
