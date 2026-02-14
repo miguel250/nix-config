@@ -78,54 +78,94 @@ let
     }:
     let
       forEachSystem = lib.genAttrs systems;
-      hostsBySystem = builtins.listToAttrs (
-        builtins.map (host: {
-          name = host.system;
-          value = host;
-        }) hosts
-      );
-      hostSystems = builtins.map (host: host.system) hosts;
+      hostsBySystem = lib.groupBy (host: host.system) hosts;
+      hostnames = builtins.map (host: host.hostname) hosts;
     in
     assert lib.assertMsg (
-      builtins.length hostSystems == builtins.length (lib.unique hostSystems)
-    ) "mkPackages: expected unique host.system values, got (${lib.concatStringsSep ", " hostSystems})";
+      builtins.length hostnames == builtins.length (lib.unique hostnames)
+    ) "mkPackages: expected unique host.hostname values, got (${lib.concatStringsSep ", " hostnames})";
     forEachSystem (
       system:
       let
-        host = hostsBySystem.${system};
+        systemHosts = hostsBySystem.${system} or [ ];
         pkgs = mkPkgs system;
-        hostPackages = host.packages { inherit pkgs; };
-        basePackages = {
-          ${host.hostname} = pkgs.buildEnv {
-            name = "${host.hostname}-packages";
-            paths = hostPackages;
-          };
-
-          default = self.packages.${system}.${host.hostname};
-
-          home-switch = pkgs.writeShellApplication {
-            name = "home-switch";
-            runtimeInputs = [
-              home-manager.packages.${system}.home-manager
-            ];
-            text = ''
-              exec home-manager switch --flake ${self.outPath}#${host.username}@${host.hostname} "$@"
-            '';
-          };
-        };
-        darwinPackages = lib.optionalAttrs pkgs.stdenv.isDarwin {
-          darwin-switch = pkgs.writeShellApplication {
-            name = "darwin-switch";
-            runtimeInputs = [
+        hostPackages = builtins.listToAttrs (
+          builtins.map (host: {
+            name = host.hostname;
+            value = pkgs.buildEnv {
+              name = "${host.hostname}-packages";
+              paths = host.packages { inherit pkgs; };
+            };
+          }) systemHosts
+        );
+        knownHosts = lib.concatStringsSep ", " (builtins.map (host: host.hostname) systemHosts);
+        switchPackage = pkgs.writeShellApplication {
+          name = "switch";
+          runtimeInputs = [
+            (if pkgs.stdenv.isDarwin then
               nix-darwin.packages.${system}.darwin-rebuild
-            ];
-            text = ''
-              exec darwin-rebuild switch --flake ${self.outPath}#${host.hostname} "$@"
+            else
+              home-manager.packages.${system}.home-manager)
+          ];
+          text =
+            let
+              hostResolver =
+                if pkgs.stdenv.isDarwin then
+                  ''
+                    host_name=""
+                    if command -v scutil >/dev/null 2>&1; then
+                      host_name="$(scutil --get LocalHostName 2>/dev/null || true)"
+                    fi
+                    if [ -z "$host_name" ]; then
+                      host_name="$(hostname)"
+                    fi
+                  ''
+                else
+                  ''
+                    host_name="$(hostname -s 2>/dev/null || hostname)"
+                  '';
+              hostCases = lib.concatMapStringsSep "\n" (
+                host:
+                if pkgs.stdenv.isDarwin then
+                  ''
+                    ${host.hostname})
+                      exec sudo -H darwin-rebuild switch --flake ${self.outPath}#${host.hostname} "$@"
+                      ;;
+                  ''
+                else
+                  ''
+                    ${host.hostname})
+                      exec home-manager switch --flake ${self.outPath}#${host.username}@${host.hostname} "$@"
+                      ;;
+                  ''
+              ) systemHosts;
+            in
+            ''
+              set -euo pipefail
+              ${hostResolver}
+
+              case "$host_name" in
+              ${hostCases}
+                *)
+                  echo "switch: unknown host \"$host_name\"." >&2
+                  echo "Known hosts: ${knownHosts}" >&2
+                  exit 1
+                  ;;
+              esac
             '';
-          };
         };
+        defaults =
+          if builtins.length systemHosts == 1 then
+            let
+              host = builtins.head systemHosts;
+            in
+            {
+              default = self.packages.${system}.${host.hostname};
+            }
+          else
+            { };
       in
-      basePackages // darwinPackages
+      hostPackages // { switch = switchPackage; } // defaults
     );
 
   mkDarwinConfigurations =

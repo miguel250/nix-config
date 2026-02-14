@@ -156,19 +156,11 @@
       };
 
       apps = forEachSystem (system: {
-        switch =
-          let
-            isDarwin = lib.hasSuffix "darwin" system;
-            switchPackage =
-              if isDarwin then self.packages.${system}.darwin-switch else self.packages.${system}.home-switch;
-            switchBin = if isDarwin then "darwin-switch" else "home-switch";
-          in
-          {
-            type = "app";
-            program = "${switchPackage}/bin/${switchBin}";
-            meta.description = "switch host configuration";
-          };
-
+        switch = {
+          type = "app";
+          program = "${self.packages.${system}.switch}/bin/switch";
+          meta.description = "switch host configuration";
+        };
       });
     };
 }
