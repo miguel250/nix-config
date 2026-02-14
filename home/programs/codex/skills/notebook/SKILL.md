@@ -1,35 +1,39 @@
 ---
 name: notebook
-version: "1.0.0"
-date: "2026-02-09"
+version: "2.0.2"
+date: "2026-02-14"
 description: >-
   Always-on repository memory workflow for agent sessions. Keep
-  `.agents/notebook.md` current with a session index/counter and only
-  high-signal, newest-first entries, using a fast startup path.
+  `~/.cache/agents/{repository_name}/notebook.md` current with a session index/counter and only
+  high-signal, newest-first entries. This skill is mandatory every session.
 ---
 
 Maintain a per-repository operational memory file. This skill is mandatory every session.
 
-Activation note: always active, no trigger required.
+Activation note: always active, no trigger required. Run `Startup (Do First)` once at the start of each session before doing any work, then re-read `notebook.md` immediately before any file edit.
 
 ## Startup (Do First)
 
 Do not start task work until this checklist is complete:
 
 1. Resolve repository root.
-2. Set notebook path to `.agents/notebook.md`.
-3. If missing, create it from `Starter Template`.
-4. Read context:
+2. Resolve repository name with `basename -s .git $(git remote get-url origin)` (fallback to repo directory name if origin is missing).
+3. If `.agents/notebook.md` exists, run the one-time migration script `python3 home/programs/codex/skills/notebook/migrate_notebook.py`.
+4. Set notebook path to `~/.cache/agents/{repository_name}/notebook.md`.
+5. If missing, create it from `Starter Template`.
+6. Read context:
    - Always read `Top Rules`, `User Preferences`, and `Session Index`.
    - Read all `## Log` entries before starting task work.
    - Read the entire notebook when any `Full-Read Trigger` applies.
-5. Run `Session Tracking` and update `Session Index`.
-6. While working, log only qualifying events under `## Log` using `Entry Format`.
-7. Run `Consolidation` when thresholds are hit.
+7. Run `Session Tracking` and update `Session Index`.
+8. While working, log only qualifying events under `## Log` using `Entry Format`.
+9. Run `Consolidation` when thresholds are hit.
+
+Migration script behavior: merges `.agents/notebook.md` into the cache notebook and removes the repo notebook only after a successful write. Run it only when `.agents/notebook.md` is present.
 
 ## Starter Template
 
-Use this exact template when creating `.agents/notebook.md`:
+Use this exact template when creating `~/.cache/agents/{repository_name}/notebook.md`:
 
 ```markdown
 # Notebook
@@ -144,5 +148,7 @@ During consolidation:
 ## Practical Defaults
 
 - Do notebook create/read steps sequentially, not in parallel.
+- Start every session by running `Startup (Do First)` and reading the required notebook sections before doing repository work.
+- Multiple agents may write the notebook at the same time. Re-read `notebook.md` immediately before editing and keep writes minimal so concurrent changes are less likely to be clobbered.
 - Quote multi-word shell search patterns.
 - Check for duplicate lessons before adding a new log entry.
