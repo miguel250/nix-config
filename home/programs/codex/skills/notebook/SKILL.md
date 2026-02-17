@@ -1,6 +1,6 @@
 ---
 name: notebook
-version: "2.0.2"
+version: "2.0.3"
 date: "2026-02-14"
 description: >-
   Always-on repository memory workflow for agent sessions. Keep
@@ -18,7 +18,7 @@ Do not start task work until this checklist is complete:
 
 1. Resolve repository root.
 2. Resolve repository name with `basename -s .git $(git remote get-url origin)` (fallback to repo directory name if origin is missing).
-3. If `.agents/notebook.md` exists, run the one-time migration script `python3 home/programs/codex/skills/notebook/migrate_notebook.py`.
+3. If `.agents/notebook.md` exists, run the one-time migration script `python3 scripts/migrate_notebook.py`.
 4. Set notebook path to `~/.cache/agents/{repository_name}/notebook.md`.
 5. If missing, create it from `Starter Template`.
 6. Read context:
