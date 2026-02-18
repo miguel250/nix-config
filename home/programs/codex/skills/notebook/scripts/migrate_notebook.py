@@ -53,6 +53,15 @@ def merge_blocks(dest: list[str], src: list[str]) -> list[str]:
     return merged
 
 
+def trim_section_boundaries(lines: list[str]) -> list[str]:
+    trimmed = list(lines)
+    while trimmed and trimmed[0] == "":
+        trimmed.pop(0)
+    while trimmed and trimmed[-1] == "":
+        trimmed.pop()
+    return trimmed
+
+
 def parse_session_ids(lines: list[str]) -> list[str]:
     ids: list[str] = []
     in_ids = False
@@ -169,11 +178,11 @@ def build_notebook(
     out: list[str] = ["# Notebook", ""]
     for title in KNOWN_SECTIONS:
         out.append(f"## {title}")
-        out.extend(merged.get(title, []))
+        out.extend(trim_section_boundaries(merged.get(title, [])))
         out.append("")
     for title, lines in extras:
         out.append(f"## {title}")
-        out.extend(lines)
+        out.extend(trim_section_boundaries(lines))
         out.append("")
     return "\n".join(out).rstrip() + "\n"
 
