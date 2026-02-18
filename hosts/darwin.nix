@@ -61,11 +61,11 @@
     onActivation = {
       cleanup = "zap";
       autoUpdate = false;
-      upgrade =  false;
+      upgrade =  true;
     };
     global.autoUpdate = false;
     casks = [
-      "ghostty@tip"
+      { name = "ghostty@tip"; greedy = true; }
       "discord"
       "spotify"
     ];
