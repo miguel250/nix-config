@@ -3,16 +3,16 @@
   lib,
 }:
 let
-  codexVersion = "0.104.0";
+  codexVersion = "0.105.0-alpha.11";
   codexReleaseAssets = {
     x86_64-linux = {
       url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-x86_64-unknown-linux-musl.tar.gz";
-      hash = "sha256-4QloDXgyPo6Od7GyI6JXdv7qbgQOsG9QyKQ5D1k8spg=";
+      hash = "sha256-heySVZ9Da1Mi+oy2cGX6NRfgWbQMGo/Uprb7kr7KWOE=";
       binaryName = "codex-x86_64-unknown-linux-musl";
     };
     aarch64-darwin = {
       url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-aarch64-apple-darwin.tar.gz";
-      hash = "sha256-twFR4DigVVJNTQAOgLS30VWGFluEdnSgwyFl0R2sJxE=";
+      hash = "sha256-H1cfq6PGdzhBkRAfeJJDvJboyyRS9MTIcZIyvJlXFwU=";
       binaryName = "codex-aarch64-apple-darwin";
     };
   };
