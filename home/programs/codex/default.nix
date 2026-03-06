@@ -23,8 +23,10 @@ let
   ];
 
   codexConfigAttrs = {
+    model = "gpt-5.4";
     model_reasoning_effort = "xhigh";
     model_reasoning_summary = "auto";
+    personality = "none";
     file_opener = "none";
     show_raw_agent_reasoning = true;
 
@@ -40,6 +42,10 @@ let
     shell_environment_policy = {
       "inherit" = "all";
       ignore_default_excludes = true;
+    };
+
+    features = {
+      multi_agent = true;
     };
   };
 
