@@ -25,6 +25,9 @@ in
       enable = true;
       enableCompletion = true;
       dotDir = config.home.homeDirectory;
+      zplug = {
+        enable = true;
+      };
       inherit shellAliases;
     };
   };
