@@ -49,15 +49,16 @@
       "com.apple.trackpad.scaling" = 3.0;
     };
 
-    CustomUserPreferences = {
-      "com.apple.dock" = {
-        autohide = true;
-        orientation = "bottom";
-        tilesize = 48;
-        magnification = true;
-        largesize = 72;
-      };
+    dock = {
+      autohide = true;
+      mru-spaces = false;
+      tilesize = 48;
+      largesize = 72;
+      orientation = "bottom";
+      magnification = true;
+    };
 
+    CustomUserPreferences = {
       "com.apple.menuextra.clock" = {
         # Show 24-hour clock in menu bar.
         Show24Hour = true;
