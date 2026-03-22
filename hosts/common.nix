@@ -57,5 +57,9 @@ in
       tree
       wget
       zsh
+      go
+      yarn
+      nodejs
+      zplug
     ];
 }

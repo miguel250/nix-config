@@ -43,6 +43,28 @@
   system.primaryUser = username;
   system.stateVersion = 6;
 
+  system.defaults = {
+    NSGlobalDomain = {
+      AppleShowAllFiles = true;
+      "com.apple.trackpad.scaling" = 3.0;
+    };
+
+    CustomUserPreferences = {
+      "com.apple.dock" = {
+        autohide = true;
+        orientation = "bottom";
+        tilesize = 48;
+        magnification = true;
+        largesize = 72;
+      };
+
+      "com.apple.menuextra.clock" = {
+        # Show 24-hour clock in menu bar.
+        Show24Hour = true;
+      };
+    };
+  };
+
   nix-homebrew = {
     enable = true;
     enableRosetta = false;
@@ -61,13 +83,17 @@
     onActivation = {
       cleanup = "zap";
       autoUpdate = false;
-      upgrade =  true;
+      upgrade = true;
     };
     global.autoUpdate = false;
     casks = [
-      { name = "ghostty@tip"; greedy = true; }
+      {
+        name = "ghostty@tip";
+        greedy = true;
+      }
       "discord"
       "spotify"
+      "1password@beta"
     ];
   };
 }
