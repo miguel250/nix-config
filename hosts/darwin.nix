@@ -56,6 +56,7 @@
       largesize = 72;
       orientation = "bottom";
       magnification = true;
+      wvous-bl-corner = 13; # hotcorner lock screen
     };
 
     CustomUserPreferences = {
