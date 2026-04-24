@@ -23,7 +23,7 @@ let
   ];
 
   codexConfigAttrs = {
-    model = "gpt-5.4";
+    model = "gpt-5.5";
     model_reasoning_effort = "xhigh";
     model_reasoning_summary = "auto";
     personality = "none";
@@ -46,6 +46,8 @@ let
 
     features = {
       multi_agent = true;
+      memories = true;
+      fast_mode = true;
     };
   };
 
