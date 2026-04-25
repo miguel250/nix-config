@@ -16,6 +16,11 @@ let
       inherit system;
       overlays = [
         ghostty.overlays.default
+        (_final: prev: {
+          ghostty = prev.ghostty.overrideAttrs (_: {
+            enableParallelBuilding = false;
+          });
+        })
         rust-overlay.overlays.default
       ];
       config.allowUnfree = true;
@@ -102,10 +107,12 @@ let
         switchPackage = pkgs.writeShellApplication {
           name = "switch";
           runtimeInputs = [
-            (if pkgs.stdenv.isDarwin then
-              nix-darwin.packages.${system}.darwin-rebuild
-            else
-              home-manager.packages.${system}.home-manager)
+            (
+              if pkgs.stdenv.isDarwin then
+                nix-darwin.packages.${system}.darwin-rebuild
+              else
+                home-manager.packages.${system}.home-manager
+            )
           ];
           text =
             let

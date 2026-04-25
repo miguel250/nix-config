@@ -8,12 +8,22 @@
 }:
 let
   dotfilesPath = dotfiles.outPath or dotfiles;
+  neovimNightly = vimrc.inputs.neovim-nightly;
+  neovimNightlySystem = neovimNightly.packages.${pkgs.stdenv.hostPlatform.system};
+  neovimNightlyPackage =
+    (neovimNightlySystem.default.override {
+    }).overrideAttrs
+      (_: {
+        enableParallelBuilding = false;
+      });
 in
 {
   imports = [
     dotfiles.homeManagerModules.default
     vimrc.homeManagerModules.default
   ];
+
+  programs.neovim.package = lib.mkForce neovimNightlyPackage;
 
   home.file.".zshinit" = {
     force = true;
