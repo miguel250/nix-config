@@ -10,8 +10,15 @@ let
   dotfilesPath = dotfiles.outPath or dotfiles;
   neovimNightly = vimrc.inputs.neovim-nightly;
   neovimNightlySystem = neovimNightly.packages.${pkgs.stdenv.hostPlatform.system};
+  treeSitterBundled = neovimNightlySystem.tree-sitter.overrideAttrs (oldAttrs: {
+    enableParallelBuilding = false;
+    env = (oldAttrs.env or { }) // {
+      RUST_MIN_STACK = "16777216";
+    };
+  });
   neovimNightlyPackage =
     (neovimNightlySystem.default.override {
+      tree-sitter = treeSitterBundled;
     }).overrideAttrs
       (_: {
         enableParallelBuilding = false;
