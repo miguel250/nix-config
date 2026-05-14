@@ -45,6 +45,8 @@
 
   system.defaults = {
     NSGlobalDomain = {
+      InitialKeyRepeat = 10;
+      KeyRepeat = 2;
       AppleShowAllFiles = true;
       "com.apple.trackpad.scaling" = 3.0;
     };
