@@ -30,6 +30,16 @@ let
     file_opener = "none";
     show_raw_agent_reasoning = true;
 
+    tui = {
+      status_line = [
+        "model-with-reasoning"
+        "current-dir"
+        "context-remaining"
+        "used-tokens"
+      ];
+      status_line_use_colors = true;
+    };
+
     sandbox_mode = "workspace-write";
     approval_policy = "on-request";
     web_search = "live";
