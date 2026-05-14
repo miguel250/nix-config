@@ -219,11 +219,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1778727955,
-        "narHash": "sha256-zkzyxeR9Y/T39RooExboru2/nY8iw6kPp/S3tUt2sW0=",
+        "lastModified": 1778733074,
+        "narHash": "sha256-1cLx0E2nP0Ws6e6Y2TNXXGe9yv9KpyoIbc70u5ORjp8=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "5e9fbc2887934cbc66eaf57ec16bec785e73f731",
+        "rev": "e44eb01f0ba0e5b2123ee5edb1d182c8ea4fb86a",
         "type": "github"
       },
       "original": {
@@ -407,11 +407,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1778728581,
-        "narHash": "sha256-9oHJZd0JVtORALqJmoHheNlFUCLxSPKJuwpgZthqonU=",
+        "lastModified": 1778735619,
+        "narHash": "sha256-/rvX9HzACin0q1/GlzZuBkxy/f5Yvg/k3z1D5juD+w4=",
         "owner": "miguel250",
         "repo": "vimrc",
-        "rev": "dd4d78728deb722af015d5b8bc39d1aed827485d",
+        "rev": "a5f654480f2b75c1e2325094a3d4aec14c8f54fa",
         "type": "github"
       },
       "original": {

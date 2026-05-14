@@ -17,9 +17,8 @@ let
     };
   };
   codexAsset =
-    codexReleaseAssets.${pkgs.stdenv.hostPlatform.system} or (
-      throw "Unsupported Codex binary system: ${pkgs.stdenv.hostPlatform.system}"
-    );
+    codexReleaseAssets.${pkgs.stdenv.hostPlatform.system}
+      or (throw "Unsupported Codex binary system: ${pkgs.stdenv.hostPlatform.system}");
 in
 pkgs.stdenv.mkDerivation {
   pname = "codex";
