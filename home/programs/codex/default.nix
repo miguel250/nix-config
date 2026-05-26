@@ -36,6 +36,7 @@ let
         "current-dir"
         "context-remaining"
         "used-tokens"
+        "fast-mode"
       ];
       status_line_use_colors = true;
     };
