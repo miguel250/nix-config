@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-DEFAULT_LOOKBACK = 10
+DEFAULT_LOOKBACK = 20
 
 
 @dataclass(frozen=True)
@@ -87,10 +87,14 @@ def parse_numeric_version(version_text: str) -> tuple[int, ...]:
     try:
         return tuple(int(part) for part in core.split("."))
     except ValueError as exc:
-        raise ValueError(f"Tag version '{version_text}' is not numeric dotted form.") from exc
+        raise ValueError(
+            f"Tag version '{version_text}' is not numeric dotted form."
+        ) from exc
 
 
-def parse_prerelease_identifiers(version_text: str) -> tuple[tuple[int, int | str], ...]:
+def parse_prerelease_identifiers(
+    version_text: str,
+) -> tuple[tuple[int, int | str], ...]:
     _, sep, prerelease = version_text.partition("-")
     if not sep:
         return ()
@@ -108,7 +112,16 @@ def latest_release(
     tag_pattern: re.Pattern[str],
     include_prerelease: bool,
 ) -> tuple[str, str, dict[str, Any]]:
-    candidates: list[tuple[tuple[int, ...], int, tuple[tuple[int, int | str], ...], str, str, dict[str, Any]]] = []
+    candidates: list[
+        tuple[
+            tuple[int, ...],
+            int,
+            tuple[tuple[int, int | str], ...],
+            str,
+            str,
+            dict[str, Any],
+        ]
+    ] = []
     for release in releases:
         if release.get("draft"):
             continue
@@ -141,9 +154,13 @@ def latest_release(
 
     if not candidates:
         release_type = "stable/prerelease" if include_prerelease else "stable"
-        raise RuntimeError(f"No matching {release_type} releases found for the provided --tag-regex.")
+        raise RuntimeError(
+            f"No matching {release_type} releases found for the provided --tag-regex."
+        )
 
-    _, _, _, version, tag, release = max(candidates, key=lambda item: (item[0], item[1], item[2]))
+    _, _, _, version, tag, release = max(
+        candidates, key=lambda item: (item[0], item[1], item[2])
+    )
     return version, tag, release
 
 
@@ -230,7 +247,9 @@ def update_file(
 ) -> None:
     original = file_path.read_text(encoding="utf-8")
     updated = replace_version(original, project_config.version_var, version_value)
-    tag_expression = build_tag_expression(tag, version_value, project_config.version_var)
+    tag_expression = build_tag_expression(
+        tag, version_value, project_config.version_var
+    )
     for entry_key, new_hash in hashes.items():
         spec = project_config.assets[entry_key]
         updated = update_asset_stanza(
@@ -283,7 +302,10 @@ def main() -> int:
     project_config = PROJECTS.get(args.project)
     if project_config is None:
         known_projects = ", ".join(sorted(PROJECTS.keys()))
-        print(f"Unknown project '{args.project}'. Known projects: {known_projects}", file=sys.stderr)
+        print(
+            f"Unknown project '{args.project}'. Known projects: {known_projects}",
+            file=sys.stderr,
+        )
         return 1
 
     if not args.file.exists():
@@ -297,9 +319,7 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 1
 
-    releases_url = (
-        f"https://api.github.com/repos/{owner}/{repo_name}/releases?per_page={DEFAULT_LOOKBACK}"
-    )
+    releases_url = f"https://api.github.com/repos/{owner}/{repo_name}/releases?per_page={DEFAULT_LOOKBACK}"
     releases = read_json(releases_url)
     if not isinstance(releases, list):
         print("Unexpected GitHub API response for releases.", file=sys.stderr)
@@ -315,7 +335,9 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 1
 
-    assets = {asset["name"]: asset for asset in release.get("assets", []) if "name" in asset}
+    assets = {
+        asset["name"]: asset for asset in release.get("assets", []) if "name" in asset
+    }
 
     print(f"Latest release: {tag}")
     hashes: dict[str, str] = {}
@@ -329,7 +351,9 @@ def main() -> int:
             return 1
         print(f"Reading digest for {spec.asset_name} ...")
         try:
-            hashes[entry_key] = release_digest_to_sri(spec.asset_name, str(asset.get("digest", "")))
+            hashes[entry_key] = release_digest_to_sri(
+                spec.asset_name, str(asset.get("digest", ""))
+            )
         except RuntimeError as exc:
             print(str(exc), file=sys.stderr)
             return 1
