@@ -3,29 +3,43 @@
   lib,
 }:
 let
-  codexVersion = "0.143.0";
+  codexVersion = "0.144.1";
   codexReleaseAssets = {
     x86_64-linux = {
       url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-x86_64-unknown-linux-musl.tar.gz";
-      hash = "sha256-2dxzHcZuInsXWxPAcb6eoSbMdnL8rIqHgj2lCw0rL/4=";
+      hash = "sha256-hAka4gxl/MfUEg25fRvVfX/435x2Cft4HHjC671PWig=";
       binaryName = "codex-x86_64-unknown-linux-musl";
+      codeModeHostUrl = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz";
+      codeModeHostHash = "sha256-GJrd8L4WqEaVQJMceKDSdnX2TgX2WaZcfVWBODg90l8=";
+      codeModeHostBinaryName = "codex-code-mode-host-x86_64-unknown-linux-musl";
     };
     aarch64-darwin = {
       url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-aarch64-apple-darwin.tar.gz";
-      hash = "sha256-ffI4TwN1Gd/32/QlLmCROlwcf9tmwUZ8kSWystNZSoY=";
+      hash = "sha256-iOcqyL0wgV99GOYtrDM9wgzjrRy6lL4WSaGXfdm/27g=";
       binaryName = "codex-aarch64-apple-darwin";
+      codeModeHostUrl = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-code-mode-host-aarch64-apple-darwin.tar.gz";
+      codeModeHostHash = "sha256-AK2hytz03pE91Ech8mGCqwNoagRW2urjJIKfuvUNKJQ=";
+      codeModeHostBinaryName = "codex-code-mode-host-aarch64-apple-darwin";
     };
   };
   codexAsset =
     codexReleaseAssets.${pkgs.stdenv.hostPlatform.system}
       or (throw "Unsupported Codex binary system: ${pkgs.stdenv.hostPlatform.system}");
+  codexSource = pkgs.fetchurl {
+    inherit (codexAsset) url hash;
+  };
+  codeModeHostSource = pkgs.fetchurl {
+    url = codexAsset.codeModeHostUrl;
+    hash = codexAsset.codeModeHostHash;
+  };
 in
 pkgs.stdenv.mkDerivation {
   pname = "codex";
   version = codexVersion;
-  src = pkgs.fetchurl {
-    inherit (codexAsset) url hash;
-  };
+  srcs = [
+    codexSource
+    codeModeHostSource
+  ];
 
   nativeBuildInputs = [ pkgs.installShellFiles ];
 
@@ -34,13 +48,16 @@ pkgs.stdenv.mkDerivation {
 
   unpackPhase = ''
     runHook preUnpack
-    tar -xzf "$src"
+    for source in $srcs; do
+      tar -xzf "$source"
+    done
     runHook postUnpack
   '';
 
   installPhase = ''
     runHook preInstall
     install -Dm755 "${codexAsset.binaryName}" "$out/bin/codex"
+    install -Dm755 "${codexAsset.codeModeHostBinaryName}" "$out/bin/codex-code-mode-host"
     runHook postInstall
   '';
 

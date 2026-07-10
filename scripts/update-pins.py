@@ -25,6 +25,9 @@ DEFAULT_LOOKBACK = 20
 class AssetSpec:
     asset_name: str
     binary_name: str
+    url_key: str = "url"
+    hash_key: str = "hash"
+    binary_key: str = "binaryName"
 
 
 @dataclass(frozen=True)
@@ -32,8 +35,7 @@ class ProjectConfig:
     repo: str
     tag_regex: str
     version_var: str
-    binary_key: str
-    assets: dict[str, AssetSpec]
+    assets: dict[str, tuple[AssetSpec, ...]]
 
 
 PROJECTS = {
@@ -41,15 +43,32 @@ PROJECTS = {
         repo="openai/codex",
         tag_regex=r"^rust-v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$",
         version_var="codexVersion",
-        binary_key="binaryName",
         assets={
-            "x86_64-linux": AssetSpec(
-                asset_name="codex-x86_64-unknown-linux-musl.tar.gz",
-                binary_name="codex-x86_64-unknown-linux-musl",
+            "x86_64-linux": (
+                AssetSpec(
+                    asset_name="codex-x86_64-unknown-linux-musl.tar.gz",
+                    binary_name="codex-x86_64-unknown-linux-musl",
+                ),
+                AssetSpec(
+                    asset_name="codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz",
+                    binary_name="codex-code-mode-host-x86_64-unknown-linux-musl",
+                    url_key="codeModeHostUrl",
+                    hash_key="codeModeHostHash",
+                    binary_key="codeModeHostBinaryName",
+                ),
             ),
-            "aarch64-darwin": AssetSpec(
-                asset_name="codex-aarch64-apple-darwin.tar.gz",
-                binary_name="codex-aarch64-apple-darwin",
+            "aarch64-darwin": (
+                AssetSpec(
+                    asset_name="codex-aarch64-apple-darwin.tar.gz",
+                    binary_name="codex-aarch64-apple-darwin",
+                ),
+                AssetSpec(
+                    asset_name="codex-code-mode-host-aarch64-apple-darwin.tar.gz",
+                    binary_name="codex-code-mode-host-aarch64-apple-darwin",
+                    url_key="codeModeHostUrl",
+                    hash_key="codeModeHostHash",
+                    binary_key="codeModeHostBinaryName",
+                ),
             ),
         },
     ),
@@ -212,10 +231,9 @@ def replace_assignment(
 def update_asset_stanza(
     text: str,
     entry_key: str,
-    binary_key: str,
+    asset_spec: AssetSpec,
     new_url: str,
     new_hash: str,
-    new_binary_name: str,
 ) -> str:
     pattern = re.compile(rf"({re.escape(entry_key)}\s*=\s*\{{)([\s\S]*?)(\n\s*\}};)")
     match = pattern.search(text)
@@ -223,9 +241,13 @@ def update_asset_stanza(
         raise RuntimeError(f"Could not locate stanza for entry_key='{entry_key}'.")
 
     block_body = match.group(2)
-    block_body = replace_assignment(block_body, "url", new_url, entry_key)
-    block_body = replace_assignment(block_body, "hash", new_hash, entry_key)
-    block_body = replace_assignment(block_body, binary_key, new_binary_name, entry_key)
+    block_body = replace_assignment(block_body, asset_spec.url_key, new_url, entry_key)
+    block_body = replace_assignment(
+        block_body, asset_spec.hash_key, new_hash, entry_key
+    )
+    block_body = replace_assignment(
+        block_body, asset_spec.binary_key, asset_spec.binary_name, entry_key
+    )
 
     return text[: match.start(2)] + block_body + text[match.end(2) :]
 
@@ -242,7 +264,7 @@ def update_file(
     version_value: str,
     tag: str,
     repo: str,
-    hashes: dict[str, str],
+    hashes: dict[tuple[str, str], str],
     dry_run: bool,
 ) -> None:
     original = file_path.read_text(encoding="utf-8")
@@ -250,19 +272,25 @@ def update_file(
     tag_expression = build_tag_expression(
         tag, version_value, project_config.version_var
     )
-    for entry_key, new_hash in hashes.items():
-        spec = project_config.assets[entry_key]
-        updated = update_asset_stanza(
-            updated,
-            entry_key=entry_key,
-            binary_key=project_config.binary_key,
-            new_url=f"https://github.com/{repo}/releases/download/{tag_expression}/{spec.asset_name}",
-            new_hash=new_hash,
-            new_binary_name=spec.binary_name,
-        )
+    for entry_key, specs in project_config.assets.items():
+        for spec in specs:
+            new_hash = hashes[(entry_key, spec.asset_name)]
+            new_url = (
+                f"https://github.com/{repo}/releases/download/"
+                f"{tag_expression}/{spec.asset_name}"
+            )
+            updated = update_asset_stanza(
+                updated,
+                entry_key=entry_key,
+                asset_spec=spec,
+                new_url=new_url,
+                new_hash=new_hash,
+            )
 
-    if dry_run:
+    if dry_run and updated != original:
         print(f"[dry-run] Would update {file_path}")
+    elif dry_run:
+        print(f"[dry-run] No changes needed in {file_path}")
     elif updated != original:
         file_path.write_text(updated, encoding="utf-8")
         print(f"Updated {file_path}")
@@ -340,24 +368,29 @@ def main() -> int:
     }
 
     print(f"Latest release: {tag}")
-    hashes: dict[str, str] = {}
-    for entry_key, spec in project_config.assets.items():
-        asset = assets.get(spec.asset_name)
-        if not asset:
+    hashes: dict[tuple[str, str], str] = {}
+    for entry_key, specs in project_config.assets.items():
+        for spec in specs:
+            asset = assets.get(spec.asset_name)
+            if not asset:
+                print(
+                    f"Missing asset '{spec.asset_name}' "
+                    f"in release '{release.get('tag_name')}'.",
+                    file=sys.stderr,
+                )
+                return 1
+            print(f"Reading digest for {spec.asset_name} ...")
+            try:
+                hashes[(entry_key, spec.asset_name)] = release_digest_to_sri(
+                    spec.asset_name, str(asset.get("digest", ""))
+                )
+            except RuntimeError as exc:
+                print(str(exc), file=sys.stderr)
+                return 1
             print(
-                f"Missing asset '{spec.asset_name}' in release '{release.get('tag_name')}'.",
-                file=sys.stderr,
+                f"  {entry_key} {spec.asset_name}: "
+                f"{hashes[(entry_key, spec.asset_name)]}"
             )
-            return 1
-        print(f"Reading digest for {spec.asset_name} ...")
-        try:
-            hashes[entry_key] = release_digest_to_sri(
-                spec.asset_name, str(asset.get("digest", ""))
-            )
-        except RuntimeError as exc:
-            print(str(exc), file=sys.stderr)
-            return 1
-        print(f"  {entry_key}: {hashes[entry_key]}")
 
     try:
         update_file(
