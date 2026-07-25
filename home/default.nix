@@ -12,6 +12,7 @@ in
     ./programs/ghosty.nix
     ./programs/codex
     ./programs/git.nix
+    ./programs/nvm
   ];
 
   programs = {

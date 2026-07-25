@@ -12,6 +12,7 @@ import base64
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.request
 from dataclasses import dataclass
@@ -31,11 +32,17 @@ class AssetSpec:
 
 
 @dataclass(frozen=True)
+class SourceSpec:
+    hash_var: str
+
+
+@dataclass(frozen=True)
 class ProjectConfig:
     repo: str
     tag_regex: str
     version_var: str
     assets: dict[str, tuple[AssetSpec, ...]]
+    source: SourceSpec | None = None
 
 
 PROJECTS = {
@@ -71,6 +78,13 @@ PROJECTS = {
                 ),
             ),
         },
+    ),
+    "nvm": ProjectConfig(
+        repo="nvm-sh/nvm",
+        tag_regex=r"^v(\d+\.\d+\.\d+)$",
+        version_var="nvmVersion",
+        assets={},
+        source=SourceSpec(hash_var="nvmHash"),
     ),
 }
 
@@ -207,11 +221,41 @@ def release_digest_to_sri(asset_name: str, digest: str) -> str:
     )
 
 
-def replace_version(text: str, version_var: str, version_value: str) -> str:
-    pattern = re.compile(rf'({re.escape(version_var)}\s*=\s*")[^"]+(";)')
-    updated, count = pattern.subn(rf"\g<1>{version_value}\2", text, count=1)
+def prefetch_source_hash(url: str) -> str:
+    try:
+        result = subprocess.run(
+            ["nix", "store", "prefetch-file", "--json", "--unpack", url],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("Could not prefetch source: 'nix' was not found.") from exc
+    except subprocess.CalledProcessError as exc:
+        details = exc.stderr.strip()
+        suffix = f": {details}" if details else "."
+        raise RuntimeError(f"Could not prefetch source{suffix}") from exc
+
+    try:
+        result_json = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("Nix returned invalid JSON while prefetching source.") from exc
+
+    if not isinstance(result_json, dict):
+        raise RuntimeError("Nix returned an unexpected prefetch result.")
+    source_hash = result_json.get("hash")
+    if not isinstance(source_hash, str) or not re.fullmatch(
+        r"sha256-[0-9A-Za-z+/]+={0,2}", source_hash
+    ):
+        raise RuntimeError("Nix prefetch result did not contain a valid SRI hash.")
+    return source_hash
+
+
+def replace_string_assignment(text: str, variable: str, new_value: str) -> str:
+    pattern = re.compile(rf'({re.escape(variable)}\s*=\s*")[^"]+(";)')
+    updated, count = pattern.subn(rf"\g<1>{new_value}\2", text, count=1)
     if count != 1:
-        raise RuntimeError(f"Could not locate version assignment for '{version_var}'.")
+        raise RuntimeError(f"Could not locate string assignment for '{variable}'.")
     return updated
 
 
@@ -265,10 +309,21 @@ def update_file(
     tag: str,
     repo: str,
     hashes: dict[tuple[str, str], str],
+    source_hash: str | None,
     dry_run: bool,
 ) -> None:
     original = file_path.read_text(encoding="utf-8")
-    updated = replace_version(original, project_config.version_var, version_value)
+    updated = replace_string_assignment(
+        original, project_config.version_var, version_value
+    )
+    if project_config.source is not None:
+        if source_hash is None:
+            raise RuntimeError(
+                f"Missing prefetched source hash for '{project_config.repo}'."
+            )
+        updated = replace_string_assignment(
+            updated, project_config.source.hash_var, source_hash
+        )
     tag_expression = build_tag_expression(
         tag, version_value, project_config.version_var
     )
@@ -392,6 +447,19 @@ def main() -> int:
                 f"{hashes[(entry_key, spec.asset_name)]}"
             )
 
+    source_hash = None
+    if project_config.source is not None:
+        source_url = (
+            f"https://github.com/{project_config.repo}/archive/refs/tags/{tag}.tar.gz"
+        )
+        print(f"Prefetching source archive for {tag} ...")
+        try:
+            source_hash = prefetch_source_hash(source_url)
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        print(f"  source: {source_hash}")
+
     try:
         update_file(
             file_path=args.file,
@@ -400,6 +468,7 @@ def main() -> int:
             tag=tag,
             repo=project_config.repo,
             hashes=hashes,
+            source_hash=source_hash,
             dry_run=args.dry_run,
         )
     except RuntimeError as exc:
