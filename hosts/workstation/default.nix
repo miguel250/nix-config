@@ -29,9 +29,21 @@ in
     {
       imports = [
         ../../home/default.nix
+        ./android.nix
       ];
 
-      targets.genericLinux.enable = true;
+      nixpkgs.config.nvidia.acceptLicense = true;
+
+      targets.genericLinux = {
+        enable = true;
+
+        # This must match the proprietary NVIDIA driver loaded by the host OS.
+        gpu.nvidia = {
+          enable = true;
+          version = "610.57.04";
+          sha256 = "sha256-suk1xmuDuwDAyFe8jg7g/VLekoa0DJzB7sKafOfrEW0=";
+        };
+      };
 
       home = {
         inherit username homeDirectory;
