@@ -3,8 +3,8 @@
   lib,
 }:
 let
-  nvmVersion = "0.40.6";
-  nvmHash = "sha256-60diMTawrIlyB29GrYcRuv5RBawGxpW82FHYWmHQgbg=";
+  nvmVersion = "0.40.7";
+  nvmHash = "sha256-bClD8XKR9yWztQQ3BDHES7VK2dyPCL1yqULpPR/K+wM=";
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "nvm";
