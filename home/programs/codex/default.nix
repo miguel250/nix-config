@@ -20,6 +20,7 @@ let
     "${homeDir}/.yarn"
     "${homeDir}/.npm"
     "${homeDir}/.local/share/pnpm"
+    "${homeDir}/workspace"
   ];
 
   codexConfigAttrs = {
@@ -76,5 +77,8 @@ in
     $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p ${codexDir}
     $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm -f ${codexConfigPath}
     $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 0644 ${codexConfigFile} ${codexConfigPath}
+  '';
+  home.activation.codexStandalone = lib.hm.dag.entryAfter [ "codexConfigWritable" ] ''
+    run ${codexCli.codexStandaloneSync}/bin/sync-codex-standalone ${lib.escapeShellArg codexDir}
   '';
 }
