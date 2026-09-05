@@ -4,6 +4,24 @@
   ...
 }:
 let
+  # nixpkgs beta 2026.1.3.6 points at an upstream-corrupted archive.
+  # Pin the next RC until nixpkgs advances its beta package.
+  androidStudioBeta =
+    pkgs.callPackage
+      (import "${pkgs.path}/pkgs/applications/editors/android-studio/linux.nix" {
+        channel = "beta";
+        pname = "android-studio-beta";
+        version = "2026.1.4.5";
+        sources.x86_64-linux = {
+          sha256Hash = "sha256-of6o6bn3hpc5OyHJbm005GFeW2K1q3STQU4vzPRhB0w=";
+          url = "https://edgedl.me.gvt1.com/android/studio/ide-zips/2026.1.4.5/android-studio-quail4-rc1-linux.tar.gz";
+        };
+        meta = pkgs.androidStudioPackages.beta.meta;
+      })
+      {
+        fontsConf = pkgs.makeFontsConf { fontDirectories = [ ]; };
+        tiling_wm = false;
+      };
   androidComposition = pkgs.androidenv.composeAndroidPackages {
     platformVersions = [ "36" ];
     buildToolsVersions = [
@@ -34,7 +52,7 @@ in
 
   home = {
     packages = [
-      pkgs.androidStudioPackages.beta
+      androidStudioBeta
       pkgs.jdk17
       androidSdk
     ];

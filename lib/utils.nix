@@ -108,7 +108,7 @@ let
           name = "switch";
           runtimeInputs = [
             (
-              if pkgs.stdenv.isDarwin then
+              if pkgs.stdenv.hostPlatform.isDarwin then
                 nix-darwin.packages.${system}.darwin-rebuild
               else
                 home-manager.packages.${system}.home-manager
@@ -117,7 +117,7 @@ let
           text =
             let
               hostResolver =
-                if pkgs.stdenv.isDarwin then
+                if pkgs.stdenv.hostPlatform.isDarwin then
                   ''
                     host_name=""
                     if command -v scutil >/dev/null 2>&1; then
@@ -133,7 +133,7 @@ let
                   '';
               hostCases = lib.concatMapStringsSep "\n" (
                 host:
-                if pkgs.stdenv.isDarwin then
+                if pkgs.stdenv.hostPlatform.isDarwin then
                   ''
                     ${host.hostname})
                       exec sudo -H darwin-rebuild switch --flake ${self.outPath}#${host.hostname} "$@"
