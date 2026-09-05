@@ -74,9 +74,9 @@ in
   home.file.".codex/skills/frontend-design".source = ./skills/frontend-design;
   home.file.".codex/skills/notebook".source = ./skills/notebook;
   home.activation.codexConfigWritable = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p ${codexDir}
-    $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm -f ${codexConfigPath}
-    $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 0644 ${codexConfigFile} ${codexConfigPath}
+    run ${pkgs.python3}/bin/python ${./sync-config.py} \
+      ${codexConfigFile} \
+      ${lib.escapeShellArg codexConfigPath}
   '';
   home.activation.codexStandalone = lib.hm.dag.entryAfter [ "codexConfigWritable" ] ''
     run ${codexCli.codexStandaloneSync}/bin/sync-codex-standalone ${lib.escapeShellArg codexDir}
