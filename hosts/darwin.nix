@@ -6,6 +6,10 @@
   pkgs,
   ...
 }:
+let
+  maxFilesSoft = 65536;
+  maxFilesHard = 200000;
+in
 {
   imports = [
     inputs.nix-homebrew.darwinModules.nix-homebrew
@@ -35,10 +39,27 @@
     computerName = hostname;
   };
 
+  launchd.daemons.limit-maxfiles.serviceConfig = {
+    ProgramArguments = [
+      "/bin/launchctl"
+      "limit"
+      "maxfiles"
+      (toString maxFilesSoft)
+      (toString maxFilesHard)
+    ];
+    RunAtLoad = true;
+    UserName = "root";
+  };
+
   users.users.${username} = {
     home = homeDirectory;
     shell = pkgs.zsh;
   };
+
+  home-manager.users.${username}.programs.zsh.initContent = ''
+    ulimit -Sn ${toString maxFilesSoft}
+    ulimit -Hn ${toString maxFilesHard}
+  '';
 
   system.primaryUser = username;
   system.stateVersion = 6;
