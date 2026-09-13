@@ -82,6 +82,10 @@ in
       wvous-bl-corner = 13; # hotcorner lock screen
     };
 
+    menuExtraClock = {
+      Show24Hour = true;
+    };
+
     CustomUserPreferences = {
       "com.apple.menuextra.clock" = {
         # Show 24-hour clock in menu bar.
