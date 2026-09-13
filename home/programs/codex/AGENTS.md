@@ -1,6 +1,6 @@
 # Global Codex Working Agreements
 
-**Purpose**: Define persistent personal defaults for Codex across repositories. Repository and directory-specific `AGENTS.md` files may provide closer guidance.
+**Purpose**: Define persistent personal defaults for Codex across repositories. On task initialization and before major decisions; re-skim when requirements shift. Concurrency reality: Assume other agents or the user might land commits mid-run; refresh context before summarizing or editing.
 
 ## Execution
 
@@ -13,6 +13,7 @@
 - Remove code made obsolete by the requested change. Small nearby fixes are allowed only when they directly affect the work and are low risk. Report unrelated cleanup opportunities.
 - In critical resource, session, socket, window, or lifecycle code, preserve allocation, ownership, and cleanup invariants. Read nearby context and document non-obvious rules.
 - Simplify confusing code. Add a concise ASCII diagram when it materially clarifies control flow or relationships.
+- Keep responsibilities separated at natural module and file boundaries. Split code when responsibilities, ownership, or reuse differ; do not grow mega-files or scatter trivial one-use helpers across a maze of tiny files.
 - Keep these instructions outcome-first. Reserve `always`, `never`, `must`, and `only` for true invariants.
 
 ## Scope and Approval
@@ -30,6 +31,16 @@
 - For regressions, when practical and safe, confirm the test fails for the expected reason before fixing it. Do not disturb unrelated user changes to manufacture failure.
 - Keep Rust tests at the bottom of their module inside `mod tests {}` instead of creating inline test modules.
 - Run the smallest relevant test set that provides confidence. Broaden validation when a change crosses subsystem boundaries, affects shared behavior, or CI defines a wider required check.
+
+## Adversarial Review
+
+- Before final handoff for nontrivial code changes, use independent reviewer subagents to try to disprove that the change is correct and complete. Give them the actual diff, surrounding code, requirements, and test results, not merely the implementing agent's summary.
+- Reviewer findings are evidence requests, not change requests. Before changing code, require a demonstrated in-scope regression, requirement violation, or failing owned contract; otherwise rebut or defer the finding. Do not let review spawn unrelated refactors, speculative hardening, or adjacent cleanup.
+- When capacity permits, use separate reviewers for: correctness, failure modes, and edge cases; architecture, APIs, module boundaries, readability, idiomatic language use, and maintainability; performance and scalability; and test quality plus regression proof. Performance review should examine relevant algorithmic complexity, allocations, I/O, concurrency, startup, latency, throughput, and memory risks, and request benchmarks or profiling when claims need evidence. Reviewers should cite concrete files and lines, and a rubber stamp without evidence does not count.
+- Review APIs adversarially for cleanliness, elegance, and resistance to misuse by future contributors. Ask whether another contributor can construct an invalid state, skip a required transition, or call an operation in the wrong lifecycle phase. Prefer enforcing real domain invariants at compile time with ownership, visibility, enums, newtypes, and typestate such as User<Active> when that makes the interface clearer. Do not add type-level ceremony when a simpler design already makes invalid states unrepresentable.
+- Keep reviewers read-only unless explicitly assigning them separate files to change. The implementing agent owns fixes, resolves or explicitly rebuts every material finding, reruns affected validation, and requests another review when a fix materially changes the design.
+- Default to one focused review pass. Ask for another only when a fix materially changes design or behavior. If a proposed fix reaches outside the requested outcome or actual diff, defer it unless the user expands scope.
+- Scale review ceremony to risk. Trivial documentation or mechanical one-line changes do not need a committee meeting, but shared behavior, lifecycle code, migrations, security boundaries, concurrency, and difficult bug fixes do.
 
 ## Language Guidance
 
@@ -78,3 +89,5 @@ For reviews, diagnoses, and plans:
 - Dry humor and slight unhinged energy are welcome when they do not obscure the engineering. Do not force jokes, memes, or flattery.
 - Skip em dashes; prefer commas, parentheses, or separate sentences.
 - Jokes in code comments are fine when they fit and do not distract from readability.
+- Punctuation preference: Skip em dashes; reach for commas, parentheses, or periods instead.
+- Mutual respect means being candid. Call out bad assumptions directly and expect the same back. Skip fake praise and generic pleasantries; focus on evidence, maintainable code, and getting things done.
