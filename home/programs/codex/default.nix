@@ -24,7 +24,7 @@ let
   ];
 
   codexConfigAttrs = {
-    model = "gpt-5.6-sol";
+    model = "gpt-6-astra";
     model_reasoning_effort = "xhigh";
     model_reasoning_summary = "auto";
     personality = "none";
@@ -76,7 +76,12 @@ in
   };
   home.file.".codex/skills/frontend-design".source = ./skills/frontend-design;
   home.file.".codex/skills/notebook".source = ./skills/notebook;
-  home.activation.codexConfigWritable = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.codexWritableRoots = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    for writableRoot in ${lib.escapeShellArgs writableRoots}; do
+      run ${pkgs.coreutils}/bin/mkdir -p -- "$writableRoot"
+    done
+  '';
+  home.activation.codexConfigWritable = lib.hm.dag.entryAfter [ "codexWritableRoots" ] ''
     run ${pkgs.python3}/bin/python ${./sync-config.py} \
       ${codexConfigFile} \
       ${lib.escapeShellArg codexConfigPath}
