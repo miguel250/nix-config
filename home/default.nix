@@ -9,7 +9,7 @@ in
   manual.manpages.enable = false;
 
   imports = [
-    ./programs/ghosty.nix
+    ./programs/ghostty.nix
     ./programs/codex
     ./programs/git.nix
     ./programs/nvm
