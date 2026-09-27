@@ -25,10 +25,8 @@ DEFAULT_LOOKBACK = 20
 @dataclass(frozen=True)
 class AssetSpec:
     asset_name: str
-    binary_name: str
     url_key: str = "url"
     hash_key: str = "hash"
-    binary_key: str = "binaryName"
 
 
 @dataclass(frozen=True)
@@ -53,28 +51,12 @@ PROJECTS = {
         assets={
             "x86_64-linux": (
                 AssetSpec(
-                    asset_name="codex-x86_64-unknown-linux-musl.tar.gz",
-                    binary_name="codex-x86_64-unknown-linux-musl",
-                ),
-                AssetSpec(
-                    asset_name="codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz",
-                    binary_name="codex-code-mode-host-x86_64-unknown-linux-musl",
-                    url_key="codeModeHostUrl",
-                    hash_key="codeModeHostHash",
-                    binary_key="codeModeHostBinaryName",
+                    asset_name="codex-package-x86_64-unknown-linux-musl.tar.gz",
                 ),
             ),
             "aarch64-darwin": (
                 AssetSpec(
-                    asset_name="codex-aarch64-apple-darwin.tar.gz",
-                    binary_name="codex-aarch64-apple-darwin",
-                ),
-                AssetSpec(
-                    asset_name="codex-code-mode-host-aarch64-apple-darwin.tar.gz",
-                    binary_name="codex-code-mode-host-aarch64-apple-darwin",
-                    url_key="codeModeHostUrl",
-                    hash_key="codeModeHostHash",
-                    binary_key="codeModeHostBinaryName",
+                    asset_name="codex-package-aarch64-apple-darwin.tar.gz",
                 ),
             ),
         },
@@ -289,10 +271,6 @@ def update_asset_stanza(
     block_body = replace_assignment(
         block_body, asset_spec.hash_key, new_hash, entry_key
     )
-    block_body = replace_assignment(
-        block_body, asset_spec.binary_key, asset_spec.binary_name, entry_key
-    )
-
     return text[: match.start(2)] + block_body + text[match.end(2) :]
 
 

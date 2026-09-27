@@ -3,23 +3,15 @@
   lib,
 }:
 let
-  codexVersion = "0.155.1";
+  codexVersion = "0.157.1";
   codexReleaseAssets = {
     x86_64-linux = {
-      url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-x86_64-unknown-linux-musl.tar.gz";
-      hash = "sha256-oO+LLevDv3R+B7GgOTVN4xMArA3MInZJi6KBRwtdkRU=";
-      binaryName = "codex-x86_64-unknown-linux-musl";
-      codeModeHostUrl = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-code-mode-host-x86_64-unknown-linux-musl.tar.gz";
-      codeModeHostHash = "sha256-n9CDdDr1W+gYrOs1HTcftRNvW2qjk48WcIc3PScGey0=";
-      codeModeHostBinaryName = "codex-code-mode-host-x86_64-unknown-linux-musl";
+      url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-package-x86_64-unknown-linux-musl.tar.gz";
+      hash = "sha256-DiEYaMn9c8tJrTWsZ1ter99rn0U9+KST35gMWaWQ/l8=";
     };
     aarch64-darwin = {
-      url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-aarch64-apple-darwin.tar.gz";
-      hash = "sha256-XlpRRw3OJCP52WvRkdC7xMwOKEimgz31F46vR6B6N2g=";
-      binaryName = "codex-aarch64-apple-darwin";
-      codeModeHostUrl = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-code-mode-host-aarch64-apple-darwin.tar.gz";
-      codeModeHostHash = "sha256-6JVxCO69cJY7CQaFfOt/eitHfRlypxRwQcYl1AcbUIo=";
-      codeModeHostBinaryName = "codex-code-mode-host-aarch64-apple-darwin";
+      url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-package-aarch64-apple-darwin.tar.gz";
+      hash = "sha256-bNpTjRnC9Nnc6WU2mqIgEa+p3OjHpzwjS2brNhHqSqs=";
     };
   };
   codexAsset =
@@ -28,36 +20,34 @@ let
   codexSource = pkgs.fetchurl {
     inherit (codexAsset) url hash;
   };
-  codeModeHostSource = pkgs.fetchurl {
-    url = codexAsset.codeModeHostUrl;
-    hash = codexAsset.codeModeHostHash;
-  };
 in
 pkgs.stdenv.mkDerivation (finalAttrs: {
   pname = "codex";
   version = codexVersion;
-  srcs = [
-    codexSource
-    codeModeHostSource
-  ];
+  src = codexSource;
+  sourceRoot = "source";
 
-  nativeBuildInputs = [ pkgs.installShellFiles ];
+  nativeBuildInputs = [
+    pkgs.installShellFiles
+    pkgs.jq
+  ];
 
   dontConfigure = true;
   dontBuild = true;
+  # Preserve upstream signatures and the self-contained package used by daemon installs.
+  dontFixup = true;
 
   unpackPhase = ''
     runHook preUnpack
-    for source in $srcs; do
-      tar -xzf "$source"
-    done
+    mkdir "$sourceRoot"
+    tar -xzf "$src" -C "$sourceRoot"
     runHook postUnpack
   '';
 
   installPhase = ''
     runHook preInstall
-    install -Dm755 "${codexAsset.binaryName}" "$out/bin/codex"
-    install -Dm755 "${codexAsset.codeModeHostBinaryName}" "$out/bin/codex-code-mode-host"
+    mkdir -p "$out"
+    cp -R . "$out/"
     runHook postInstall
   '';
 
@@ -65,12 +55,27 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
     installShellCompletion --cmd codex --zsh <("$out/bin/codex" completion zsh)
   '';
 
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    jq -e --arg version "$version" '
+      .layoutVersion == 1 and .version == $version and
+      .entrypoint == "bin/codex" and .resourcesDir == "codex-resources" and
+      .pathDir == "codex-path"
+    ' "$out/codex-package.json"
+    for executable in bin/codex bin/codex-code-mode-host codex-path/rg codex-resources/zsh/bin/zsh ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "codex-resources/bwrap"}; do
+      test -x "$out/$executable"
+    done
+    test "$("$out/bin/codex" --version)" = "codex-cli $version"
+    runHook postInstallCheck
+  '';
+
   passthru.codexStandaloneSync =
     let
       codexStandalone = pkgs.linkFarm "codex-standalone-${finalAttrs.version}" [
         {
           name = "current";
-          path = "${finalAttrs.finalPackage}/bin";
+          path = finalAttrs.finalPackage;
         }
       ];
     in
@@ -82,7 +87,7 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
         standalone_target="''${1:?Expected Codex home directory}/packages/standalone"
 
         for executable in codex codex-code-mode-host; do
-          if [[ ! -f "$standalone_source/current/$executable" || ! -x "$standalone_source/current/$executable" ]]; then
+          if [[ ! -f "$standalone_source/current/bin/$executable" || ! -x "$standalone_source/current/bin/$executable" ]]; then
             echo "Missing packaged Codex executable: $executable" >&2
             exit 1
           fi

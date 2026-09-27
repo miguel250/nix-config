@@ -71,6 +71,9 @@ in
 {
   home.packages = lib.mkAfter [ codexCli ];
   home.file.".codex/AGENTS.md".source = ./AGENTS.md;
+  home.file.".codex/app-server-daemon/settings.json".text = builtins.toJSON {
+    updater.autoUpdateEnabled = false;
+  };
   home.file.".codex/skills/frontend-design".source = ./skills/frontend-design;
   home.file.".codex/skills/notebook".source = ./skills/notebook;
   home.activation.codexConfigWritable = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

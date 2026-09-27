@@ -15,7 +15,8 @@ in
       background-blur = 10;
       clipboard-read = "allow";
       clipboard-write = "allow";
-      copy-on-select = true;
+      copy-on-select = "clipboard";
+      mouse-shift-capture = "never";
       clipboard-paste-protection = false;
       keybind = lib.optionals isLinux [
         "ctrl+v=paste_from_clipboard"
