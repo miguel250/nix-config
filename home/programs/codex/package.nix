@@ -3,15 +3,15 @@
   lib,
 }:
 let
-  codexVersion = "0.160.1";
+  codexVersion = "0.166.0";
   codexReleaseAssets = {
     x86_64-linux = {
       url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-package-x86_64-unknown-linux-musl.tar.gz";
-      hash = "sha256-NAgBVlkGpwKPa6qpq2hTrdrvIh8AFqFBenwf/dlsIfA=";
+      hash = "sha256-HUSyi8SsmTfX01MiZLqmilB842SVag1Ou4VvMxze4lQ=";
     };
     aarch64-darwin = {
       url = "https://github.com/openai/codex/releases/download/rust-v${codexVersion}/codex-package-aarch64-apple-darwin.tar.gz";
-      hash = "sha256-9zUn7gnG24aay7N7cJhmsznqdO+R0t4lXpx07JYMYxQ=";
+      hash = "sha256-VaRAy1eflwq+fHmrGB5UsOpMQZvpnzM7vYaO66ycIfA=";
     };
   };
   codexAsset =
@@ -63,7 +63,7 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
       .entrypoint == "bin/codex" and .resourcesDir == "codex-resources" and
       .pathDir == "codex-path"
     ' "$out/codex-package.json"
-    for executable in bin/codex bin/codex-code-mode-host codex-path/rg codex-resources/zsh/bin/zsh ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "codex-resources/bwrap"}; do
+    for executable in bin/codex bin/codex-code-mode-host codex-path/rg  ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "codex-resources/bwrap"}; do
       test -x "$out/$executable"
     done
     test "$("$out/bin/codex" --version)" = "codex-cli $version"
