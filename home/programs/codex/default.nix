@@ -24,11 +24,13 @@ let
   ];
 
   codexConfigAttrs = {
-    model = "gpt-6-astra";
+    model = "gpt-6.1-sol";
     model_reasoning_effort = "xhigh";
     model_reasoning_summary = "auto";
     personality = "none";
     file_opener = "none";
+    cli_auth_credentials_store = "file";
+    mcp_oauth_credentials_store = "file";
     show_raw_agent_reasoning = true;
 
     tui = {
@@ -38,8 +40,10 @@ let
         "context-remaining"
         "used-tokens"
         "fast-mode"
+        "weekly-limit"
       ];
       status_line_use_colors = true;
+      model_availability_nux."gpt-6.1-sol" = 1;
     };
 
     sandbox_mode = "workspace-write";
@@ -61,6 +65,10 @@ let
       memories = true;
       fast_mode = true;
       js_repl = false;
+    };
+
+    memories = {
+      version = "v2";
     };
   };
 
