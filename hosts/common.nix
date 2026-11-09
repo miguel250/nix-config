@@ -61,5 +61,6 @@ in
       yarn
       nodejs
       zplug
+      just
     ];
 }

@@ -94,7 +94,7 @@ in
       ${codexConfigFile} \
       ${lib.escapeShellArg codexConfigPath}
   '';
-  home.activation.codexStandalone = lib.hm.dag.entryAfter [ "codexConfigWritable" ] ''
-    run ${codexCli.codexStandaloneSync}/bin/sync-codex-standalone ${lib.escapeShellArg codexDir}
+  home.activation.codexDaemon = lib.hm.dag.entryAfter [ "codexConfigWritable" ] ''
+    run ${codexCli.codexDaemonSync}/bin/sync-codex-daemon ${lib.escapeShellArg codexDir}
   '';
 }
